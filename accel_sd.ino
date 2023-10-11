@@ -14,12 +14,12 @@ const int MPU = 0x68;
 // float FVel = 0;
 // int noChangeY = 0;
 
-int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+int8_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 double pitch, roll;
 File dataFile;
 void setup() {
   Wire.begin();
-  //Wire.setClock(400000L);
+  Wire.setClock(400000L);
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
   Wire.write(0);
@@ -100,21 +100,15 @@ void loop() {
 
     // write to sd card(MOSI-pin 11, MISO-pin 12, CLK-pin 13, CS-pin 4)
     if (SD.begin(4)) {
-      dataFile = SD.open("data.txt", FILE_WRITE);
+      dataFile = SD.open("data.afc", FILE_WRITE);
 
       if (dataFile) {
-        dataFile.print(AcX);
-        dataFile.print(", ");
-        dataFile.print(AcY);
-        dataFile.print(", ");
-        dataFile.print(AcZ);
-        dataFile.print(", ");
-        dataFile.print(GyX);
-        dataFile.print(", ");
-        dataFile.print(GyY);
-        dataFile.print(", ");
-        dataFile.print(GyZ);
-        dataFile.println();
+        dataFile.write(AcX);
+        dataFile.write(AcY);
+        dataFile.write(AcZ);
+        dataFile.write(GyX);
+        dataFile.write(GyY);
+        dataFile.write(GyZ);
         dataFile.close();
       }
     }
