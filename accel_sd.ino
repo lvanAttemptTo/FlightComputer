@@ -16,8 +16,27 @@ const int MPU = 0x68;
 
 int8_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 double pitch, roll;
+int RED_LED = 5;
+int BLUE_LED = 6;
+int GREEN_LED = 7;
+
 File dataFile;
 void setup() {
+  pinMode(RED_LED, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
+  pinMode(GREEN_LED, OUTPUT);
+  digitalWrite(RED_LED, HIGH);
+
+  if(!SD.begin(4))
+  {
+    while(1);
+  }
+  else
+  {
+    digitalWrite(RED_LED, LOW);
+    digitalWrite(BLUE_LED, HIGH);
+  }
+
   Wire.begin();
   Wire.setClock(400000L);
   Wire.beginTransmission(MPU);
@@ -58,7 +77,7 @@ void setup() {
 
   Wire.beginTransmission(MPU);
   Wire.write(0x1B);  //pointing Register-28
-  Wire.write(y);     //value for Register-28; Full-scale range is now +/- 16g
+  Wire.write(y);     //value for Register-28; Full-scale range is now +/- 2000 deg/s
   Wire.endTransmission();
   // Serial.begin(9600);
   // Serial.println("Start");
@@ -112,6 +131,11 @@ void loop() {
         dataFile.close();
       }
     }
+  }
+  else
+  {
+    digitalWrite(BLUE_LED, LOW);
+    digitalWrite(GREEN_LED, HIGH);
   }
   //send the data out the serial port
 
