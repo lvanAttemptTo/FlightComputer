@@ -1,4 +1,5 @@
 https://gpsd.gitlab.io/gpsd/NMEA.html#_gsa_gps_dop_and_active_satellites
+https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation)
 
 XXGGA-GPS FIX DATA
 1. time UTC
