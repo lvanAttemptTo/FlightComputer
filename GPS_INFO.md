@@ -29,7 +29,7 @@ XXGLL-GEO POS
 
 XXGSA-GPS DOP and act Sat
 1. Selection Mode M-manual A-automatic
-2. Mode 1-fix 2-2D 3-3D
+2. Mode 1-no fix 2-2D 3-3D
 3. ID 1
 4. ID 2
 5. ID 3
