@@ -22,6 +22,7 @@ int GREEN_LED = 7;
 
 File dataFile;
 void setup() {
+  Serial.begin(9600);
   pinMode(RED_LED, OUTPUT);
   pinMode(BLUE_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
@@ -29,7 +30,9 @@ void setup() {
 
   if(!SD.begin(4))
   {
+    Serial.println("Failed to connect to SD");
     while(1);
+    
   }
   else
   {
@@ -79,7 +82,6 @@ void setup() {
   Wire.write(0x1B);  //pointing Register-28
   Wire.write(y);     //value for Register-28; Full-scale range is now +/- 2000 deg/s
   Wire.endTransmission();
-  // Serial.begin(9600);
   // Serial.println("Start");
 }
 void loop() {
@@ -119,7 +121,7 @@ void loop() {
 
     // write to sd card(MOSI-pin 11, MISO-pin 12, CLK-pin 13, CS-pin 4)
     if (SD.begin(4)) {
-      dataFile = SD.open("data.afc", FILE_WRITE);
+      dataFile = SD.open("data.bin", FILE_WRITE);
 
       if (dataFile) {
         dataFile.write(AcX);
@@ -130,6 +132,14 @@ void loop() {
         dataFile.write(GyZ);
         dataFile.close();
       }
+      else
+      {
+        Serial.println("Failed to open file");
+      }
+    }
+    else
+    {
+        Serial.println("Failed to connect to SD 2");
     }
   }
   else

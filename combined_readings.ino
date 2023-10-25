@@ -130,29 +130,29 @@ void loop()
 
   //send the data out the serial port
   
-  // Serial.print(AcX);
-  // Serial.print(" ");
-  // Serial.print(AcY);
-  // Serial.print(" ");
-  // Serial.print(AcZ);
-  // Serial.print(" ");
-  // Serial.print(GyX);
-  // Serial.print(" ");
-  // Serial.print(GyY);
-  // Serial.print(" ");
-  // Serial.print(GyZ);
-  // Serial.print(" ");
-  // Serial.print(tx);
-  // Serial.print(" ");
-  // Serial.print(temp.temperature);
-  // Serial.print(" ");
-  // Serial.println(pressure.pressure);
-  
-  float secs = micros();
-  grabs += 1;
-  Serial.print(secs);
+  Serial.print(AcX);
   Serial.print(" ");
-  Serial.println(grabs);
+  Serial.print(AcY);
+  Serial.print(" ");
+  Serial.print(AcZ);
+  Serial.print(" ");
+  Serial.print(GyX);
+  Serial.print(" ");
+  Serial.print(GyY);
+  Serial.print(" ");
+  Serial.print(GyZ);
+  Serial.print(" ");
+  Serial.print(tx);
+  Serial.print(" ");
+  Serial.print(temp.temperature);
+  Serial.print(" ");
+  Serial.println(pressure.pressure);
+  
+  // float secs = micros();
+  // grabs += 1;
+  // Serial.print(secs);
+  // Serial.print(" ");
+  // Serial.println(grabs);
 
 
   //  Serial.print(",AX:");
