@@ -1,9 +1,7 @@
 #include <Wire.h>
 #include <math.h>
 #include <SPI.h>
-#include <SD.h>
 #include <Adafruit_LPS2X.h>
-#include <Adafruit_Sensor.h>
 const int MPU = 0x68;
 
 
@@ -27,7 +25,6 @@ float startPressure;
 
 int grabs = 0;
 
-File dataFile;
 void setup()
 {
 
@@ -92,15 +89,15 @@ void loop()
   Wire.write(0x3B);
   Wire.endTransmission(false);
   Wire.requestFrom(MPU, 14, true);
-  int AcXoff, AcYoff, AcZoff, GyXoff, GyYoff, GyZoff;
-  int tempAcc, toff;
-  double t, tx, tf;
+
+  int tempAcc;
+  double tx;
   //Acceleration data correction
   // AcXoff = -194;
   // AcYoff = -30;
   // AcZoff = -1857;
   //Temperature correction
-  toff = 0;
+
   //Gyro correction
   // GyXoff = 59;
   // GyYoff = 3;
@@ -130,87 +127,26 @@ void loop()
 
   //send the data out the serial port
   
+  Serial.print("AcX:");
   Serial.print(AcX);
-  Serial.print(" ");
+  Serial.print(", AcY:");
   Serial.print(AcY);
-  Serial.print(" ");
+  Serial.print(", AcZ:");
   Serial.print(AcZ);
-  Serial.print(" ");
+  Serial.print(", GyX:");
   Serial.print(GyX);
-  Serial.print(" ");
+  Serial.print(", GyY:");
   Serial.print(GyY);
-  Serial.print(" ");
+  Serial.print(", GyZ:");
   Serial.print(GyZ);
-  Serial.print(" ");
+  Serial.print(", tx:");
   Serial.print(tx);
-  Serial.print(" ");
+  Serial.print(", bt:");
   Serial.print(temp.temperature);
-  Serial.print(" ");
+  Serial.print(", pr:");
   Serial.println(pressure.pressure);
   
-  // float secs = micros();
-  // grabs += 1;
-  // Serial.print(secs);
-  // Serial.print(" ");
-  // Serial.println(grabs);
-
-
-  //  Serial.print(",AX:");
-  //  Serial.print(float(AcX)/2048);
-  //  Serial.print(",AY:");
-  //  Serial.print(float(AcY)/2048);
-  //  Serial.print(",AZ:");
-  //  Serial.print(float(AcZ)/2048);
-  //  Serial.print(",GX:");
-  //  Serial.print(float(GyX)/16.384);
-  //  Serial.print(",GY:");
-  //  Serial.print(float(GyY)/16.384);
-  //  Serial.print(",GZ:");
-  //  Serial.print(float(GyZ)/16.384);
-  //  Serial.println();
-
-  // long mil = millis();
-  // long step = mil - prevMil;
-  // prevMil = mil;
-
-  // if (abs(AcZ) > 40)
-  // {
-  //   float VChange = ((float(AcZ)/2048) * (step));
-  //   VVel  = VVel + VChange;
-  // }
-  // else
-  // {
-  //   noChangeZ = noChangeZ + 1;
-  // }
-
-  // if (abs(AcY) > 20)
-  // {
-  //   float FChange = ((float(AcY)/2048) * (step));
-  //   FVel  = FVel + FChange;
-  // }
-  // else
-  // {
-  //   noChangeY = noChangeY + 1;
-  // }
-
-  // FPos = FPos + (FVel * step);
-
-  // VPos = VPos + (VVel * step);
-  // if (noChangeZ > 3)
-  // {
-  //   VVel = 0;
-  //   noChangeZ = 0;
-  // }
-  // if (noChangeY > 3)
-  // {
-  //   FVel = 0;
-  //   noChangeY = 0;
-  // }
-
-  // Serial.print("FPos:");
-  // Serial.print(FPos);
-  // Serial.print(",VPos:");
-  // Serial.println(FVel);
+  
 }
 //convert the accel data to pitch/roll
 // void getAngle(int Vx, int Vy, int Vz) {
