@@ -1,8 +1,8 @@
 ## GPS
 Connections
 - GND-GND
-- TX-D3
-- RX-D2
+- TX-Tx1
+- RX-RX0
 - VCC-5V
 
 ## Micro-SD Card Reader
