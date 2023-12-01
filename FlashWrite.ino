@@ -6,6 +6,7 @@
    https://github.com/me-no-dev/arduino-esp32fs-plugin */
 #define FORMAT_SPIFFS_IF_FAILED true
 
+uint8_t readVal[2];
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\r\n", dirname);
 
@@ -95,8 +96,10 @@ void readFileI(fs::FS &fs, const char * path){
     }
 
     Serial.println("- read from file:");
-    while(file.available()){
-        Serial.print(file.read());
+    for(int i = 0; i < 2; i++){
+      if (file.available()){
+        readVal[i] = file.read();
+      } 
     }
     file.close();
 }
@@ -212,13 +215,18 @@ void setup(){
       Serial.println("SPIFFS Mount Failed");
       return;
   }
-  uint8_t testVal1 = 57;
-  uint8_t testVal2 = 500;
-  uint8_t seperator = 0;  writeFileI(SPIFFS, "/test.bin", testVal1);
+  uint8_t testVal1 = 0b11111111;
+  uint8_t testVal2 = 0b11111111;
+  // uint8_t seperator = 0;  
+  writeFileI(SPIFFS, "/test.bin", testVal1);
 
   appendFileI(SPIFFS, "/test.bin", testVal2);
   listDir(SPIFFS, "/", 0);
   readFileI(SPIFFS, "/test.bin");
+  uint16_t fVal = ((uint16_t)readVal[0] << 8) | readVal[1];
+  Serial.print(readVal[0]);
+  Serial.print(readVal[1]);
+  Serial.println(fVal);
   deleteFile(SPIFFS, "/test.bin");
   
 }
