@@ -26,7 +26,6 @@ long start = 0;
 int RED_LED = 5;
 int BLUE_LED = 6;
 int GREEN_LED = 7;
-float 
 Adafruit_LPS22 lps;
 float startPressure;
 
