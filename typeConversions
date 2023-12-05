@@ -1,0 +1,35 @@
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  while(!Serial) {};
+  float f = 12.536363;
+  uint8_t *bin;
+  bin = (uint8_t*)(&f);
+  uint32_t comBin = ((uint32_t)bin[3] << 24) | ((uint32_t)bin[2] << 16) | ((uint32_t)bin[1] << 8) | ((uint32_t)bin[0]);
+  union {
+    uint32_t b;
+    float f;
+  } toFloat;
+  toFloat.b = comBin;
+  Serial.println(toFloat.f);
+
+
+  unsigned long l = 1523867689;
+  uint8_t *bin1;
+  bin1 = (uint8_t*)(&l);
+  uint32_t comBin1 = ((uint32_t)bin1[3] << 24) | ((uint32_t)bin1[2] << 16) | ((uint32_t)bin1[1] << 8) | ((uint32_t)bin1[0]);
+  union {
+    uint32_t b;
+    long l;
+  } toLong;
+  toLong.b = comBin1;
+  Serial.println(toLong.l);
+
+}
+
+
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+}
