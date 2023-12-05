@@ -5,8 +5,8 @@
    test or else use the SPIFFS plugin to create a partition
    https://github.com/me-no-dev/arduino-esp32fs-plugin */
 #define FORMAT_SPIFFS_IF_FAILED true
+uint8_t readVal[4];
 
-uint8_t readVal[2];
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\r\n", dirname);
 
@@ -38,23 +38,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
-void readFile(fs::FS &fs, const char * path){
-    Serial.printf("Reading file: %s\r\n", path);
-
-    File file = fs.open(path);
-    if(!file || file.isDirectory()){
-        Serial.println("- failed to open file for reading");
-        return;
-    }
-
-    Serial.println("- read from file:");
-    while(file.available()){
-        Serial.write(file.read());
-    }
-    file.close();
-}
-
-void writeFile(fs::FS &fs, const char * path, const char * message){
+void writeFileI(fs::FS &fs, const char * path, uint8_t *message, int len){
     Serial.printf("Writing file: %s\r\n", path);
 
     File file = fs.open(path, FILE_WRITE);
@@ -62,24 +46,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
         Serial.println("- failed to open file for writing");
         return;
     }
-    if(file.print(message)){
-        Serial.println("- file written");
-    } else {
-        Serial.println("- write failed");
-    }
-    file.close();
-}
-
-void writeFileI(fs::FS &fs, const char * path, uint8_t message){
-    Serial.printf("Writing file: %s\r\n", path);
-
-    File file = fs.open(path, FILE_WRITE);
-    static uint8_t buf[1] = {message};
-    if(!file){
-        Serial.println("- failed to open file for writing");
-        return;
-    }
-    if(file.write(buf, 1)){
+    if(file.write(message, len)){
         Serial.println("- file written");
     } else {
         Serial.println("- write failed");
@@ -96,10 +63,10 @@ void readFileI(fs::FS &fs, const char * path){
     }
 
     Serial.println("- read from file:");
-    for(int i = 0; i < 2; i++){
-      if (file.available()){
-        readVal[i] = file.read();
-      } 
+    for(int i = 0; i < file.size(); i++){
+      if(file.available()){
+       readVal[i] = file.read();
+      }
     }
     file.close();
 }
@@ -121,21 +88,7 @@ void appendFileI(fs::FS &fs, const char * path, uint8_t message){
     file.close();
 }
 
-void appendFile(fs::FS &fs, const char * path, const char * message){
-    Serial.printf("Appending to file: %s\r\n", path);
 
-    File file = fs.open(path, FILE_APPEND);
-    if(!file){
-        Serial.println("- failed to open file for appending");
-        return;
-    }
-    if(file.print(message)){
-        Serial.println("- message appended");
-    } else {
-        Serial.println("- append failed");
-    }
-    file.close();
-}
 
 void renameFile(fs::FS &fs, const char * path1, const char * path2){
     Serial.printf("Renaming file %s to %s\r\n", path1, path2);
@@ -215,18 +168,28 @@ void setup(){
       Serial.println("SPIFFS Mount Failed");
       return;
   }
-  uint8_t testVal1 = 0b11111111;
-  uint8_t testVal2 = 0b11111111;
-  // uint8_t seperator = 0;  
-  writeFileI(SPIFFS, "/test.bin", testVal1);
 
-  appendFileI(SPIFFS, "/test.bin", testVal2);
+
+ 
+  
+
+
+  float f = 12.536363;
+  uint8_t *bin;
+  bin = (uint8_t*)(&f);
+  // uint8_t seperator = 0;  
+  writeFileI(SPIFFS, "/test.bin", bin, 4);
+
   listDir(SPIFFS, "/", 0);
   readFileI(SPIFFS, "/test.bin");
-  uint16_t fVal = ((uint16_t)readVal[0] << 8) | readVal[1];
-  Serial.print(readVal[0]);
-  Serial.print(readVal[1]);
-  Serial.println(fVal);
+  uint32_t comBin = ((uint32_t)readVal[3] << 24) | ((uint32_t)readVal[2] << 16) | ((uint32_t)readVal[1] << 8) | ((uint32_t)readVal[0]);
+  Serial.println(comBin);
+  union {
+    uint32_t b;
+    float f;
+  } toFloat;
+  toFloat.b = comBin;
+  Serial.println(toFloat.f);
   deleteFile(SPIFFS, "/test.bin");
   
 }
