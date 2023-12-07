@@ -71,16 +71,52 @@ void readFileI(fs::FS &fs, const char * path){
     file.close();
 }
 
-void appendFileI(fs::FS &fs, const char * path, uint8_t message){
+float readFileF(fs::FS &fs, const char * path, int pos){
+  Serial.printf("Reading file: %s\r\n", path);
+  uint8_t rV[4];
+  File file = fs.open(path);
+  if(!file || file.isDirectory()){
+      Serial.println("- failed to open file for reading");
+      return 0;
+  }
+
+  Serial.println("- read from file:");
+  if(pos > 0)
+  {
+    for(int i = 0; i < pos; i++)
+    {
+      if(file.available())
+      {
+        file.read();
+      }
+    }
+  }
+  for(int i = 0; i < file.size(); i++){
+    if(file.available()){
+      rV[i] = file.read();
+    }
+  }
+  file.close();
+
+  uint32_t bytes = ((uint32_t)rV[3] << 24) | ((uint32_t)rV[2] << 16) | ((uint32_t)rV[1] << 8) | ((uint32_t)rV[0]);
+  union {
+    uint32_t b;
+    float f;
+  } toFloat;
+  toFloat.b = bytes;
+
+  return toFloat.f;
+}
+
+void appendFileI(fs::FS &fs, const char * path, uint8_t *message, int len){
     Serial.printf("Appending to file: %s\r\n", path);
 
-    static uint8_t buf[1] = {message};
     File file = fs.open(path, FILE_APPEND);
     if(!file){
         Serial.println("- failed to open file for appending");
         return;
     }
-    if(file.write(buf, 1)){
+    if(file.write(message, len)){
         Serial.println("- message appended");
     } else {
         Serial.println("- append failed");
@@ -170,26 +206,42 @@ void setup(){
   }
 
 
- 
+  deleteFile(SPIFFS, "/test.bin");
+  float fVals[100];
+  for(int i = 0; i < 100; i++)
+  {
+    fVals[i] = (float)(random(-10000000, 10000000)/random(-10000000, 10000000));
+    float f = fVals[i];
+    uint8_t *bin;
+    bin = (uint8_t*)(&f);
+    // uint8_t seperator = 0;  
+    appendFileI(SPIFFS, "/test.bin", bin, 4);
+  }
+
+  delay(5000);
   
 
 
-  float f = 12.536363;
-  uint8_t *bin;
-  bin = (uint8_t*)(&f);
-  // uint8_t seperator = 0;  
-  writeFileI(SPIFFS, "/test.bin", bin, 4);
-
   listDir(SPIFFS, "/", 0);
-  readFileI(SPIFFS, "/test.bin");
-  uint32_t comBin = ((uint32_t)readVal[3] << 24) | ((uint32_t)readVal[2] << 16) | ((uint32_t)readVal[1] << 8) | ((uint32_t)readVal[0]);
-  Serial.println(comBin);
-  union {
-    uint32_t b;
-    float f;
-  } toFloat;
-  toFloat.b = comBin;
-  Serial.println(toFloat.f);
+
+  int fSize = 400;
+
+
+  bool corr = true;
+  for(int i = 0; i < fSize; i += 4)
+  {
+    float fVal = readFileF(SPIFFS, "/test.bin", i);
+    if (fVals[i] != fVal)
+    {
+      corr = false;
+    }
+  }
+  Serial.println(corr);
+
+  
+  
+
+  
   deleteFile(SPIFFS, "/test.bin");
   
 }
