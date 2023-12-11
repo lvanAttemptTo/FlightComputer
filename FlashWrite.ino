@@ -53,22 +53,46 @@ void writeFileI(fs::FS &fs, const char * path, uint8_t *message, int len){
     }
     file.close();
 }
-void readFileI(fs::FS &fs, const char * path){
-    Serial.printf("Reading file: %s\r\n", path);
 
-    File file = fs.open(path);
-    if(!file || file.isDirectory()){
-        Serial.println("- failed to open file for reading");
-        return;
-    }
+int16_t readFileI(fs::FS &fs, const char * path, int pos){
+  Serial.printf("Reading file: %s\r\n", path);
+  uint8_t rV[2] = {0, 0};
+  File file = fs.open(path);
+  if(!file || file.isDirectory()){
+      Serial.println("- failed to open file for reading");
+      return 0;
+  }
 
-    Serial.println("- read from file:");
-    for(int i = 0; i < file.size(); i++){
-      if(file.available()){
-       readVal[i] = file.read();
+  Serial.println("- read from file:");
+  if(pos > 0)
+  {
+    for(int i = 0; i < pos; i++)
+    {
+      if(file.available())
+      {
+        file.read();
       }
     }
-    file.close();
+  }
+  for(int i = 0; i < 2; i++){
+    if(file.available()){
+      rV[i] = file.read();
+    }
+  }
+  file.close();
+
+  uint16_t bytes = ((uint16_t)rV[1] << 8) | ((uint16_t)rV[0]);
+
+  union
+  {
+    uint16_t i;
+    int16_t i2;
+  }toInt;
+
+  toInt.i = bytes;
+
+
+  return toInt.i2;
 }
 
 float readFileF(fs::FS &fs, const char * path, int pos){
@@ -91,7 +115,7 @@ float readFileF(fs::FS &fs, const char * path, int pos){
       }
     }
   }
-  for(int i = 0; i < file.size(); i++){
+  for(int i = 0; i < 4; i++){
     if(file.available()){
       rV[i] = file.read();
     }
@@ -106,6 +130,43 @@ float readFileF(fs::FS &fs, const char * path, int pos){
   toFloat.b = bytes;
 
   return toFloat.f;
+}
+
+unsigned long readFileL(fs::FS &fs, const char * path, int pos){
+  Serial.printf("Reading file: %s\r\n", path);
+  uint8_t rV[4];
+  File file = fs.open(path);
+  if(!file || file.isDirectory()){
+      Serial.println("- failed to open file for reading");
+      return 0;
+  }
+
+  Serial.println("- read from file:");
+  if(pos > 0)
+  {
+    for(int i = 0; i < pos; i++)
+    {
+      if(file.available())
+      {
+        file.read();
+      }
+    }
+  }
+  for(int i = 0; i < 4; i++){
+    if(file.available()){
+      rV[i] = file.read();
+    }
+  }
+  file.close();
+
+  uint32_t bytes = ((uint32_t)rV[3] << 24) | ((uint32_t)rV[2] << 16) | ((uint32_t)rV[1] << 8) | ((uint32_t)rV[0]);
+  union {
+    uint32_t b;
+    unsigned long l;
+  } toLong;
+  toLong.b = bytes;
+
+  return toLong.l;
 }
 
 void appendFileI(fs::FS &fs, const char * path, uint8_t *message, int len){
@@ -206,38 +267,43 @@ void setup(){
   }
 
 
-  deleteFile(SPIFFS, "/test.bin");
-  float fVals[100];
-  for(int i = 0; i < 100; i++)
-  {
-    fVals[i] = (float)(random(-10000000, 10000000)/random(-10000000, 10000000));
-    float f = fVals[i];
-    uint8_t *bin;
-    bin = (uint8_t*)(&f);
-    // uint8_t seperator = 0;  
-    appendFileI(SPIFFS, "/test.bin", bin, 4);
-  }
+  // deleteFile(SPIFFS, "/test.bin");
+  // float fVals[100];
+  // for(int i = 0; i < 100; i++)
+  // {
+  //   fVals[i] = (float)(random(-10000000, 10000000)/random(-10000000, 10000000));
+  //   float f = fVals[i];
+  //   uint8_t *bin;
+  //   bin = (uint8_t*)(&f);
+  //   // uint8_t seperator = 0;  
+  //   appendFileI(SPIFFS, "/test.bin", bin, 4);
+  // }
 
-  delay(5000);
+  // delay(5000);
   
 
 
-  listDir(SPIFFS, "/", 0);
+  // listDir(SPIFFS, "/", 0);
 
-  int fSize = 400;
+  // int fSize = 100;
 
 
-  bool corr = true;
-  for(int i = 0; i < fSize; i += 4)
-  {
-    float fVal = readFileF(SPIFFS, "/test.bin", i);
-    if (fVals[i] != fVal)
-    {
-      corr = false;
-    }
-  }
-  Serial.println(corr);
+  // bool corr = true;
+  // for(int i = 0; i < fSize; i += 1)
+  // {
+  //   float fVal = readFileF(SPIFFS, "/test.bin", 4 * i);
+  //   if (fVals[i] != fVal)
+  //   {
+  //     corr = false;
+  //   }
+  // }
+  // Serial.println(corr);
 
+  uint16_t l = 3657;
+  uint8_t *longB;
+  longB = (uint8_t*)(&l);
+  writeFileI(SPIFFS, "/test.bin", longB, 2);
+  Serial.println(readFileI(SPIFFS, "/test.bin", 0));
   
   
 
