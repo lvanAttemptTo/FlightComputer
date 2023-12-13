@@ -223,7 +223,9 @@ void deleteFile(fs::FS &fs, const char * path){
 
 void setup()
 {
-
+  digitalWrite(LED_RED, LOW); //red
+  digitalWrite(LED_GREEN, HIGH); //green
+  digitalWrite(LED_BLUE, HIGH); //blue
 
   Wire.begin();
   Wire.setClock(400000L);
@@ -282,6 +284,10 @@ void setup()
       return;
   }
   deleteFile(SPIFFS, "/test.bin");
+
+  digitalWrite(LED_RED, HIGH); //red
+  digitalWrite(LED_GREEN, HIGH); //green
+  digitalWrite(LED_BLUE, LOW); //blue
 
   for (int i = 0; i < 3; i++)
   {
@@ -386,6 +392,10 @@ void setup()
 
     delay(250);
   }
+
+  digitalWrite(LED_RED, HIGH); //red
+  digitalWrite(LED_GREEN, LOW); //green
+  digitalWrite(LED_BLUE, HIGH); //blue
 
   listDir(SPIFFS, "/", 0);
 
