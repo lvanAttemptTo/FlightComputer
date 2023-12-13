@@ -1,11 +1,11 @@
 #include <Wire.h>
 #include <math.h>
 #include <SPI.h>
+#include <SD.h>
 #include <Adafruit_LPS2X.h>
+#include <Adafruit_Sensor.h>
 const int MPU = 0x68;
 
-#define CORE_0 0
-#define CORE_1 1
 
 
 // long prevMil = 0;
@@ -17,20 +17,17 @@ const int MPU = 0x68;
 // int noChangeY = 0;
 
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
-sensors_event_t temp;
-sensors_event_t pressure;
-int tx;
-// double pitch, roll;
-long runs = 0;
-long start = 0;
+double pitch, roll;
 int RED_LED = 5;
 int BLUE_LED = 6;
 int GREEN_LED = 7;
+
 Adafruit_LPS22 lps;
 float startPressure;
 
 int grabs = 0;
 
+File dataFile;
 void setup()
 {
 
@@ -87,108 +84,138 @@ void setup()
   }
 
   lps.setDataRate(LPS22_RATE_75_HZ);
- 
- xTaskCreatePinnedToCore(
-    readData, "Data Read", 2048  // Stack size
-    ,
-    NULL  // When no parameter is used, simply pass NULL
-    ,
-    1  // Priority
-    ,
-    NULL  // With task handle we will be able to manipulate with this task.
-    ,
-    CORE_0  // Core on which the task will run
-  );
-  xTaskCreatePinnedToCore(
-    printData, "Data Print", 2048  // Stack size
-    ,
-    NULL  // When no parameter is used, simply pass NULL
-    ,
-    1  // Priority
-    ,
-    NULL  // With task handle we will be able to manipulate with this task.
-    ,
-    CORE_1  // Core on which the task will run
-  );
-  start = millis();
-}
-
-void loop() {
 
 }
-void readData(void *pvParameters)
+void loop()
 {
-  (void)pvParameters;
+  Wire.beginTransmission(MPU);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 14, true);
+  uint16_t tx;
+  //Acceleration data correction
+  // AcXoff = -194;
+  // AcYoff = -30;
+  // AcZoff = -1857;
+  //Temperature correction
+  //Gyro correction
+  // GyXoff = 59;
+  // GyYoff = 3;
+  // GyZoff = 6;
+  //read accel data
+  AcX = (Wire.read() << 8 | Wire.read());
+  AcY = (Wire.read() << 8 | Wire.read());
+  AcZ = (Wire.read() << 8 | Wire.read());
+  //read temperature data
+  tx = (Wire.read() << 8 | Wire.read());
+  // t = tx / 340 + 36.53;
+  // tf = (t * 9 / 5) + 32;
+  //read gyro data
+  GyX = (Wire.read() << 8 | Wire.read());
+  GyY = (Wire.read() << 8 | Wire.read());
+  GyZ = (Wire.read() << 8 | Wire.read());
+  //get pitch/roll
+  //getAngle(AcX, AcY, AcZ);
 
-  for (;;) {
-    Wire.beginTransmission(MPU);
-    Wire.write(0x3B);
-    Wire.endTransmission(false);
-    Wire.requestFrom(MPU, 14, true);
+  // write to sd card(MOSI-pin 11, MISO-pin 12, CLK-pin 13, CS-pin 4)
 
-    int tempAcc;
+  // Get baro data
+  sensors_event_t temp;
+  sensors_event_t pressure;
+  lps.getEvent(&pressure, &temp);// get pressure
 
-    //Acceleration data correction
-    // AcXoff = -194;
-    // AcYoff = -30;
-    // AcZoff = -1857;
-    //Temperature correction
-
-    //Gyro correction
-    // GyXoff = 59;
-    // GyYoff = 3;
-    // GyZoff = 6;
-    //read accel data
-    AcX = (Wire.read() << 8 | Wire.read());
-    AcY = (Wire.read() << 8 | Wire.read());
-    AcZ = (Wire.read() << 8 | Wire.read());
-    //read temperature data
-    tempAcc = (Wire.read() << 8 | Wire.read());
-    tx = tempAcc;
-
-    //read gyro data
-    GyX = (Wire.read() << 8 | Wire.read());
-    GyY = (Wire.read() << 8 | Wire.read());
-    GyZ = (Wire.read() << 8 | Wire.read());
-
-
-    // write to sd card(MOSI-pin 11, MISO-pin 12, CLK-pin 13, CS-pin 4)
-
-    // Get baro data
-
-    lps.getEvent(&pressure, &temp);// get pressure
-    runs += 1;
-    //send the data out the serial port
-    
-    
-  }
+  //send the data out the serial port
   
-}
+  Serial.print(AcX);
+  Serial.print(" ");
+  Serial.print(AcY);
+  Serial.print(" ");
+  Serial.print(AcZ);
+  Serial.print(" ");
+  Serial.print(GyX);
+  Serial.print(" ");
+  Serial.print(GyY);
+  Serial.print(" ");
+  Serial.print(GyZ);
+  Serial.print(" ");
+  Serial.print(tx);
+  Serial.print(" ");
+  Serial.print(temp.temperature);
+  Serial.print(" ");
+  Serial.println(pressure.pressure);
+  
+  // float secs = micros();
+  // grabs += 1;
+  // Serial.print(secs);
+  // Serial.print(" ");
+  // Serial.println(grabs);
 
-void printData(void *pvParameters)
-{
-  (void)pvParameters;
 
-  for (;;) {
-    Serial.print("AcX:");
-    Serial.print(AcX);
-    Serial.print(", AcY:");
-    Serial.print(AcY);
-    Serial.print(", AcZ:");
-    Serial.print(AcZ);
-    Serial.print(", GyX:");
-    Serial.print(GyX);
-    Serial.print(", GyY:");
-    Serial.print(GyY);
-    Serial.print(", GyZ:");
-    Serial.print(GyZ);
-    Serial.print(", tx:");
-    Serial.print(tx);
-    Serial.print(", bt:");
-    Serial.print(temp.temperature);
-    Serial.print(", pr:");
-    Serial.print(pressure.pressure);
-    Serial.print(", cs:");
-    Serial.println(runs/(millis()-start));
-  }
+  //  Serial.print(",AX:");
+  //  Serial.print(float(AcX)/2048);
+  //  Serial.print(",AY:");
+  //  Serial.print(float(AcY)/2048);
+  //  Serial.print(",AZ:");
+  //  Serial.print(float(AcZ)/2048);
+  //  Serial.print(",GX:");
+  //  Serial.print(float(GyX)/16.384);
+  //  Serial.print(",GY:");
+  //  Serial.print(float(GyY)/16.384);
+  //  Serial.print(",GZ:");
+  //  Serial.print(float(GyZ)/16.384);
+  //  Serial.println();
+
+  // long mil = millis();
+  // long step = mil - prevMil;
+  // prevMil = mil;
+
+  // if (abs(AcZ) > 40)
+  // {
+  //   float VChange = ((float(AcZ)/2048) * (step));
+  //   VVel  = VVel + VChange;
+  // }
+  // else
+  // {
+  //   noChangeZ = noChangeZ + 1;
+  // }
+
+  // if (abs(AcY) > 20)
+  // {
+  //   float FChange = ((float(AcY)/2048) * (step));
+  //   FVel  = FVel + FChange;
+  // }
+  // else
+  // {
+  //   noChangeY = noChangeY + 1;
+  // }
+
+  // FPos = FPos + (FVel * step);
+
+  // VPos = VPos + (VVel * step);
+  // if (noChangeZ > 3)
+  // {
+  //   VVel = 0;
+  //   noChangeZ = 0;
+  // }
+  // if (noChangeY > 3)
+  // {
+  //   FVel = 0;
+  //   noChangeY = 0;
+  // }
+
+  // Serial.print("FPos:");
+  // Serial.print(FPos);
+  // Serial.print(",VPos:");
+  // Serial.println(FVel);
 }
+//convert the accel data to pitch/roll
+// void getAngle(int Vx, int Vy, int Vz) {
+//  double x = Vx;
+//  double y = Vy;
+//  double z = Vz;
+//  pitch = atan(x / sqrt((y * y) + (z * z)));
+//  roll = atan(y / sqrt((x * x) + (z * z)));
+//  //convert radians into degrees
+//  pitch = pitch * (180.0 / 3.14);
+//  roll = roll * (180.0 / 3.14);
+// }
