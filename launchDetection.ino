@@ -15,11 +15,14 @@ const int MPU = 0x68;
 // float FVel = 0;
 // int noChangeY = 0;
 
-int16_t AcX[2], AcY[2], AcZ[2], GyX[2], GyY[2], GyZ[2], tx[2];
-float pres[2], tmp[2];
-uint8_t dataPointer = 0;
+const int arrSize = 500;
+bool sCheck = false;
+int16_t AcX[arrSize], AcY[arrSize], AcZ[arrSize], GyX[arrSize], GyY[arrSize], GyZ[arrSize], tx[arrSize];
+float pres[arrSize], tmp[arrSize];
+uint16_t dataPointer = 0;
 bool launched = false;
-int8_t largestDif = 0;
+bool landed = false;
+float sPres;
 
 Adafruit_LPS22 lps;
 
@@ -81,7 +84,7 @@ void setup()
   }
 
   lps.setDataRate(LPS22_RATE_75_HZ);
-  dataPointer = (dataPointer + 1) % 2;
+  dataPointer = (dataPointer + 1) % arrSize;
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);
   Wire.endTransmission(false);
@@ -108,13 +111,20 @@ void setup()
     while (1) delay(10);
 
   }
+  // Get baro data
+    sensors_event_t temp;
+    sensors_event_t pressure;
+    lps.getEvent(&pressure, &temp);// get pressure
+    pres[dataPointer] = pressure.pressure;
+    tmp[dataPointer] = temp.temperature;
+    sPres = pressure.pressure;
 
 }
 void loop()
 {
   while (launched == false)
   {
-    dataPointer = (dataPointer + 1) % 2;
+    dataPointer = (dataPointer + 1) % arrSize;
     Wire.beginTransmission(MPU);
     Wire.write(0x3B);
     Wire.endTransmission(false);
@@ -166,128 +176,185 @@ void loop()
     // Serial.print(pres[dataPointer]);
     // Serial.print(" ");
     // Serial.println(tmp[dataPointer]);
-
-    if(abs(AcX[0] - AcX[1]) > 1000)
-    {
-    Serial.print(AcX[0]);
-    Serial.print(" ");
-    Serial.print(AcY[0]);
-    Serial.print(" ");
-    Serial.print(AcZ[0]);
-    Serial.print(" ");
-    Serial.print(GyX[0]);
-    Serial.print(" ");
-    Serial.print(GyY[0]);
-    Serial.print(" ");
-    Serial.print(GyZ[0]);
-    Serial.print(" ");
-    Serial.print(tx[0]);
-    Serial.print(" ");
-    Serial.print(pres[0]);
-    Serial.print(" ");
-    Serial.println(tmp[0]);
-    Serial.print(AcX[1]);
-    Serial.print(" ");
-    Serial.print(AcY[1]);
-    Serial.print(" ");
-    Serial.print(AcZ[1]);
-    Serial.print(" ");
-    Serial.print(GyX[1]);
-    Serial.print(" ");
-    Serial.print(GyY[1]);
-    Serial.print(" ");
-    Serial.print(GyZ[1]);
-    Serial.print(" ");
-    Serial.print(tx[1]);
-    Serial.print(" ");
-    Serial.print(pres[1]);
-    Serial.print(" ");
-    Serial.println(tmp[1]);
-    launched = true;
-    }
-    if(1000 < abs(AcY[0] - AcY[1]))
-    {
-      Serial.print(AcX[0]);
-    Serial.print(" ");
-    Serial.print(AcY[0]);
-    Serial.print(" ");
-    Serial.print(AcZ[0]);
-    Serial.print(" ");
-    Serial.print(GyX[0]);
-    Serial.print(" ");
-    Serial.print(GyY[0]);
-    Serial.print(" ");
-    Serial.print(GyZ[0]);
-    Serial.print(" ");
-    Serial.print(tx[0]);
-    Serial.print(" ");
-    Serial.print(pres[0]);
-    Serial.print(" ");
-    Serial.println(tmp[0]);
-    Serial.print(AcX[1]);
-    Serial.print(" ");
-    Serial.print(AcY[1]);
-    Serial.print(" ");
-    Serial.print(AcZ[1]);
-    Serial.print(" ");
-    Serial.print(GyX[1]);
-    Serial.print(" ");
-    Serial.print(GyY[1]);
-    Serial.print(" ");
-    Serial.print(GyZ[1]);
-    Serial.print(" ");
-    Serial.print(tx[1]);
-    Serial.print(" ");
-    Serial.print(pres[1]);
-    Serial.print(" ");
-    Serial.println(tmp[1]);
-    launched = true;
-
-    }
-    if(1000 < abs(AcZ[0] - AcZ[1]))
-    {
-      Serial.print(AcX[0]);
-    Serial.print(" ");
-    Serial.print(AcY[0]);
-    Serial.print(" ");
-    Serial.print(AcZ[0]);
-    Serial.print(" ");
-    Serial.print(GyX[0]);
-    Serial.print(" ");
-    Serial.print(GyY[0]);
-    Serial.print(" ");
-    Serial.print(GyZ[0]);
-    Serial.print(" ");
-    Serial.print(tx[0]);
-    Serial.print(" ");
-    Serial.print(pres[0]);
-    Serial.print(" ");
-    Serial.println(tmp[0]);
-    Serial.print(AcX[1]);
-    Serial.print(" ");
-    Serial.print(AcY[1]);
-    Serial.print(" ");
-    Serial.print(AcZ[1]);
-    Serial.print(" ");
-    Serial.print(GyX[1]);
-    Serial.print(" ");
-    Serial.print(GyY[1]);
-    Serial.print(" ");
-    Serial.print(GyZ[1]);
-    Serial.print(" ");
-    Serial.print(tx[1]);
-    Serial.print(" ");
-    Serial.print(pres[1]);
-    Serial.print(" ");
-    Serial.println(tmp[1]);
-    launched = true;
-    }
     
+    if (sCheck == true)
+    {
+      if(abs(AcX[0] - AcX[(arrSize-1)]) > 1500)
+      {
+          /*
+        Serial.print(AcX[0]);
+        Serial.print(" ");
+        Serial.print(AcY[0]);
+        Serial.print(" ");
+        Serial.print(AcZ[0]);
+        Serial.print(" ");
+        Serial.print(GyX[0]);
+        Serial.print(" ");
+        Serial.print(GyY[0]);
+        Serial.print(" ");
+        Serial.print(GyZ[0]);
+        Serial.print(" ");
+        Serial.print(tx[0]);
+        Serial.print(" ");
+        Serial.print(pres[0]);
+        Serial.print(" ");
+        Serial.println(tmp[0]);
+        Serial.print(AcX[1]);
+        Serial.print(" ");
+        Serial.print(AcY[1]);
+        Serial.print(" ");
+        Serial.print(AcZ[1]);
+        Serial.print(" ");
+        Serial.print(GyX[1]);
+        Serial.print(" ");
+        Serial.print(GyY[1]);
+        Serial.print(" ");
+        Serial.print(GyZ[1]);
+        Serial.print(" ");
+        Serial.print(tx[1]);
+        Serial.print(" ");
+        Serial.print(pres[1]);
+        Serial.print(" ");
+        Serial.println(tmp[1]);
+        */
+        Serial.println("launch");
+        launched = true;
+        }
+        if(1500 < abs(AcY[0] - AcY[(arrSize-1)]))
+        {
+              /*
+          Serial.print(AcX[0]);
+          Serial.print(" ");
+          Serial.print(AcY[0]);
+          Serial.print(" ");
+          Serial.print(AcZ[0]);
+          Serial.print(" ");
+          Serial.print(GyX[0]);
+          Serial.print(" ");
+          Serial.print(GyY[0]);
+          Serial.print(" ");
+          Serial.print(GyZ[0]);
+          Serial.print(" ");
+          Serial.print(tx[0]);
+          Serial.print(" ");
+          Serial.print(pres[0]);
+          Serial.print(" ");
+          Serial.println(tmp[0]);
+          Serial.print(AcX[1]);
+          Serial.print(" ");
+          Serial.print(AcY[1]);
+          Serial.print(" ");
+          Serial.print(AcZ[1]);
+          Serial.print(" ");
+          Serial.print(GyX[1]);
+          Serial.print(" ");
+          Serial.print(GyY[1]);
+          Serial.print(" ");
+          Serial.print(GyZ[1]);
+          Serial.print(" ");
+          Serial.print(tx[1]);
+          Serial.print(" ");
+          Serial.print(pres[1]);
+          Serial.print(" ");
+          Serial.println(tmp[1]);
+          */
+          Serial.println("launch");
+          launched = true;
 
-    
-
-
+        }
+        if(1500 < abs(AcZ[0] - AcZ[(arrSize-1)]))
+        {
+            /*
+          Serial.print(AcX[0]);
+          Serial.print(" ");
+          Serial.print(AcY[0]);
+          Serial.print(" ");
+          Serial.print(AcZ[0]);
+          Serial.print(" ");
+          Serial.print(GyX[0]);
+          Serial.print(" ");
+          Serial.print(GyY[0]);
+          Serial.print(" ");
+          Serial.print(GyZ[0]);
+          Serial.print(" ");
+          Serial.print(tx[0]);
+          Serial.print(" ");
+          Serial.print(pres[0]);
+          Serial.print(" ");
+          Serial.println(tmp[0]);
+          Serial.print(AcX[1]);
+          Serial.print(" ");
+          Serial.print(AcY[1]);
+          Serial.print(" ");
+          Serial.print(AcZ[1]);
+          Serial.print(" ");
+          Serial.print(GyX[1]);
+          Serial.print(" ");
+          Serial.print(GyY[1]);
+          Serial.print(" ");
+          Serial.print(GyZ[1]);
+          Serial.print(" ");
+          Serial.print(tx[1]);
+          Serial.print(" ");
+          Serial.print(pres[1]);
+          Serial.print(" ");
+          Serial.println(tmp[1]);
+          */
+          Serial.println("launch");
+          launched = true;
+        }
+    }
+    if (dataPointer == (arrSize - 1) && sCheck == false)
+    {
+      sCheck = true;
+      Serial.println("ready for launch");
+    }
 
   }
+
+  delay(5000);
+
+  while (landed == false)
+  {
+    dataPointer = 1;
+    Wire.beginTransmission(MPU);
+    Wire.write(0x3B);
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU, 14, true);
+
+
+
+    //read accel data
+    AcX[dataPointer] = (Wire.read() << 8 | Wire.read());
+    AcY[dataPointer] = (Wire.read() << 8 | Wire.read());
+    AcZ[dataPointer] = (Wire.read() << 8 | Wire.read());
+    //read temperature data
+    tx[dataPointer] = (Wire.read() << 8 | Wire.read());
+
+    // t = tx / 340 + 36.53;
+    // tf = (t * 9 / 5) + 32;
+    //read gyro data
+    GyX[dataPointer] = (Wire.read() << 8 | Wire.read());
+    GyY[dataPointer] = (Wire.read() << 8 | Wire.read());
+    GyZ[dataPointer] = (Wire.read() << 8 | Wire.read());
+    //get pitch/roll
+    //getAngle(AcX, AcY, AcZ);
+
+    // write to sd card(MOSI-pin 11, MISO-pin 12, CLK-pin 13, CS-pin 4)
+
+    // Get baro data
+    sensors_event_t temp;
+    sensors_event_t pressure;
+    lps.getEvent(&pressure, &temp);// get pressure
+    pres[dataPointer] = pressure.pressure;
+    tmp[dataPointer] = temp.temperature;
+    if (abs(pressure.pressure - sPres) < 2)
+    {
+      delay(5000);
+      landed = true;
+      Serial.println("launch complete");
+    }
+  }
+  
 
 }
